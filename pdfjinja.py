@@ -125,6 +125,9 @@ class PdfJinja(object):
         ))
 
     def check(self, data):
+    	logging.debug('Checkbox data: ')
+        logging.debug(self.context["name"])
+        logging.debug(data)
         # fix Checkboxes: stop converting vals, correct for given PDF (On/Off, Yes/Off, Choice1/Choice2 ...), with bool (True/False)
         #self.rendered[self.context["name"]] = bool(data)
         #return bool(data)
@@ -204,6 +207,9 @@ class PdfJinja(object):
         return dt.strftime("%m/%d/%y")
 
     def exec_pdftk(self, data):
+    	logging.debug('Data for fdf filling: ')
+        logging.debug(data.items())
+
         fdf = forge_fdf("", data.items(), [], [], [], checkbox_checked_name="Yes")
         fdf_file = open("fdf.fdf", "wb")
         fdf_file.write(fdf)
@@ -216,10 +222,17 @@ class PdfJinja(object):
             "dont_ask",
             "flatten"
         ]
+        logging.debug('Pdftk args: ')
+        logging.debug(args)
 
         p = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate(fdf)
+        logging.debug('Result: ')
+        logging.debug(stdout)
+     
         if stderr.strip():
+        	logging.debug('Errors: ')
+            logging.debug(stderr)
             raise IOError(stderr)
 
         return BytesIO(stdout)
@@ -227,11 +240,16 @@ class PdfJinja(object):
     def __call__(self, data, attachments=[], pages=None):
         self.rendered = {}
         for field, ctx in self.fields.items():
+        	logging.debug('Form field: ')
+            logging.debug(field)
+
             if "template" not in ctx:
                 continue
 
             self.context = ctx
             kwargs = self.template_args(data)
+            logging.debug('Json fields: ')
+            logging.debug(kwargs )
             template = self.context["template"]
 
             try:
@@ -244,6 +262,11 @@ class PdfJinja(object):
                     if PY3:
                         field = field.decode('utf-8')
                     self.rendered[field] = rendered_field
+            logging.debug('Rendered Field val: ')
+            logging.debug(rendered_field)
+
+        logging.debug('The whole array of rendered keys and values, given to pdftk: ')
+        logging.debug(self.rendered)
 
         filled = PdfFileReader(self.exec_pdftk(self.rendered))
         for pagenumber, watermark in self.watermarks:
@@ -287,14 +310,19 @@ def parse_args(description):
 
 
 def main():
-    logging.basicConfig()
+    logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(levelname)s %(message)s',filename='myapp.log',filemode='w')
     args = parse_args(__doc__)
+    logging.debug('PDF: ')
+    logging.debug(args.pdf)
     pdfparser = PdfJinja(args.pdf)
     pages = args.page and args.page.split(",")
 
     import json
     json_data = args.json.read().decode('utf-8')
     data = json.loads(json_data)
+    logging.debug('Json Data: ')
+    logging.debug(data)
+    
     Attachment.font = args.font
     attachments = [
         Attachment(**kwargs) for kwargs in data.pop("attachments", [])
