@@ -205,6 +205,9 @@ class PdfJinja(object):
 
     def exec_pdftk(self, data):
         fdf = forge_fdf("", data.items(), [], [], [], checkbox_checked_name="Yes")
+        fdf_file = open("fdf.fdf", "wb")
+        fdf_file.write(fdf)
+        fdf_file.close()        
         args = [
             "pdftk",
             self.filename,
