@@ -125,8 +125,10 @@ class PdfJinja(object):
         ))
 
     def check(self, data):
-        self.rendered[self.context["name"]] = bool(data)
-        return bool(data)
+        # fix Checkboxes: stop converting vals, correct for given PDF (On/Off, Yes/Off, Choice1/Choice2 ...), with bool (True/False)
+        #self.rendered[self.context["name"]] = bool(data)
+        #return bool(data)
+        return data
 
     def paste(self, data):
         rect = self.context["rect"]
